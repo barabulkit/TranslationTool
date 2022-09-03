@@ -1,5 +1,6 @@
 package gui;
 
+import model.Passage;
 import model.TwineJson;
 import util.JsonProcessor;
 
@@ -34,6 +35,7 @@ public class TranslationWindow extends JFrame {
     TwineJson sourceJson;
     TwineJson translatedJson;
     int currentPassage = 0;
+    int currentLink = -1;
 
     public TranslationWindow() {
         super("TranslationTool");
@@ -71,7 +73,7 @@ public class TranslationWindow extends JFrame {
                         sourceJson = JsonProcessor.load(file);
                         translatedJson = JsonProcessor.load(file);
 
-                        sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText());
+                        sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText().split("\\[")[0]);
                         translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
                     } catch (IOException ex) {
                         ex.printStackTrace();
@@ -98,12 +100,31 @@ public class TranslationWindow extends JFrame {
         prevButton = new JButton("Prev");
         prevButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(currentPassage != 0) {
+                if(currentLink > 0) {
+                    String trText = translatedArea.getText();
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    tCP.getLinks().get(currentLink).setName(trText);
+                    currentLink--;
+                    sourceArea.setText(sCP.getLinks().get(currentLink).getName());
+                    translatedArea.setText(tCP.getLinks().get(currentLink).getName());
+                } else if(currentLink == 0) {
+                    String trText = translatedArea.getText();
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    tCP.getLinks().get(currentLink).setName(trText);
+                    currentLink--;
+                    sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText().split("\\[")[0]);
+                    translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
+                } else if(currentPassage != 0) {
                     String trText = translatedArea.getText();
                     translatedJson.getPassages().get(currentPassage).setText(trText);
                     currentPassage--;
-                    sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText());
-                    translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    currentLink = tCP.getLinks().size() - 1;
+                    sourceArea.setText(sCP.getLinks().get(currentLink).getName());
+                    translatedArea.setText(tCP.getLinks().get(currentLink).getName());
                 }
             }
         });
@@ -111,11 +132,30 @@ public class TranslationWindow extends JFrame {
         nextButton = new JButton("Next");
         nextButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(currentPassage != (sourceJson.getPassages().size() - 1)) {
+                if(currentLink == -1) {
                     String trText = translatedArea.getText();
                     translatedJson.getPassages().get(currentPassage).setText(trText);
+                    currentLink++;
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    sourceArea.setText(sCP.getLinks().get(currentLink).getName());
+                    translatedArea.setText(tCP.getLinks().get(currentLink).getName());
+                } else if(currentLink < sourceJson.getPassages().get(currentPassage).getLinks().size() - 1) {
+                    String trText = translatedArea.getText();
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    tCP.getLinks().get(currentLink).setName(trText);
+                    currentLink++;
+                    sourceArea.setText(sCP.getLinks().get(currentLink).getName());
+                    translatedArea.setText(tCP.getLinks().get(currentLink).getName());
+                } else if(currentPassage != (sourceJson.getPassages().size() - 1)) {
+                    String trText = translatedArea.getText();
+                    Passage tCP = translatedJson.getPassages().get(currentPassage);
+                    Passage sCP = sourceJson.getPassages().get(currentPassage);
+                    tCP.getLinks().get(currentLink).setName(trText);
                     currentPassage++;
-                    sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText());
+                    currentLink = -1;
+                    sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText().split("\\[")[0]);
                     translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
                 }
             }
