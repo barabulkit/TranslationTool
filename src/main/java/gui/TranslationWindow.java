@@ -1,8 +1,10 @@
 package gui;
 
 import model.Passage;
+import model.TriggersText;
 import model.TwineJson;
 import util.JsonProcessor;
+import util.TextUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,6 +36,8 @@ public class TranslationWindow extends JFrame {
 
     TwineJson sourceJson;
     TwineJson translatedJson;
+    TriggersText sourceTriggersText;
+    TriggersText translatedTriggersText;
     int currentPassage = 0;
     int currentLink = -1;
 
@@ -72,9 +76,10 @@ public class TranslationWindow extends JFrame {
                     try {
                         sourceJson = JsonProcessor.load(file);
                         translatedJson = JsonProcessor.load(file);
-
-                        sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText().split("\\[")[0]);
-                        translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
+                        sourceTriggersText = new TriggersText(sourceJson.getPassages().get(currentPassage).getText());
+                        translatedTriggersText = new TriggersText(translatedJson.getPassages().get(currentPassage).getText());
+                        sourceArea.setText(TextUtil.removeLinks(sourceTriggersText.getText()));
+                        translatedArea.setText(TextUtil.removeLinks(translatedTriggersText.getText()));
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
@@ -85,6 +90,11 @@ public class TranslationWindow extends JFrame {
         saveButton = new JButton("Save");
         saveButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                if(currentLink != -1) {
+                    storeLinkTranslation();
+                } else {
+                    storePassageTranslation();
+                }
                 int res = fileChooser.showSaveDialog(TranslationWindow.this);
                 if(res == JFileChooser.APPROVE_OPTION) {
                     File file = fileChooser.getSelectedFile();
@@ -188,34 +198,40 @@ public class TranslationWindow extends JFrame {
     }
 
     private void storeLinkTranslation() {
-        String trText = translatedArea.getText();
+        translatedTriggersText.setText(translatedArea.getText());
         Passage tCP = translatedJson.getPassages().get(currentPassage);
         Passage sCP = sourceJson.getPassages().get(currentPassage);
-        tCP.getLinks().get(currentLink).setName(trText);
+        tCP.getLinks().get(currentLink).setName(translatedTriggersText.toString());
     }
 
     private void setTextFromCurrentLinks() {
         Passage tCP = translatedJson.getPassages().get(currentPassage);
         Passage sCP = sourceJson.getPassages().get(currentPassage);
-        sourceArea.setText(sCP.getLinks().get(currentLink).getName());
-        translatedArea.setText(tCP.getLinks().get(currentLink).getName());
+        sourceTriggersText = new TriggersText(sCP.getLinks().get(currentLink).getName());
+        translatedTriggersText = new TriggersText(tCP.getLinks().get(currentLink).getName());
+        sourceArea.setText(sourceTriggersText.getText());
+        translatedArea.setText(translatedTriggersText.getText());
     }
 
     private void setTextFromPassage() {
-        sourceArea.setText(sourceJson.getPassages().get(currentPassage).getText().split("\\[")[0]);
-        translatedArea.setText(translatedJson.getPassages().get(currentPassage).getText());
+        sourceTriggersText = new TriggersText(sourceJson.getPassages().get(currentPassage).getText());
+        translatedTriggersText = new TriggersText(translatedJson.getPassages().get(currentPassage).getText());
+        sourceArea.setText(sourceTriggersText.getText());
+        translatedArea.setText(TextUtil.removeLinks(translatedTriggersText.getText()));
     }
 
     private void storePassageTranslation() {
-        String trText = translatedArea.getText();
-        translatedJson.getPassages().get(currentPassage).setText(trText);
+        translatedTriggersText.setText(translatedArea.getText());
+        translatedJson.getPassages().get(currentPassage).setText(translatedTriggersText.toString());
     }
 
     private void setTextFromLinkBeforePassage() {
         Passage tCP = translatedJson.getPassages().get(currentPassage);
         Passage sCP = sourceJson.getPassages().get(currentPassage);
         currentLink = tCP.getLinks().size() - 1;
-        sourceArea.setText(sCP.getLinks().get(currentLink).getName());
-        translatedArea.setText(tCP.getLinks().get(currentLink).getName());
+        sourceTriggersText = new TriggersText(sCP.getLinks().get(currentLink).getName());
+        translatedTriggersText = new TriggersText(tCP.getLinks().get(currentLink).getName());
+        sourceArea.setText(sourceTriggersText.getText());
+        translatedArea.setText(translatedTriggersText.getText());
     }
 }
